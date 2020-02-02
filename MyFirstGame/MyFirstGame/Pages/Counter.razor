@@ -1,0 +1,49 @@
+﻿@page "/counter"
+@using Microsoft.AspNetCore.SignalR.Client;
+@inject IJSRuntime JsRuntime;
+
+<h1>Counter - ID : @Id - @State</h1>
+
+<p>Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+@code {
+    private string Id;
+    private string State;
+    private int currentCount = 0;
+    private HubConnection connection;
+
+
+    private async Task IncrementCount()
+    {
+        currentCount++;
+        await connection?.SendAsync("SendNumber", currentCount);
+    }
+
+    protected override async void OnInitialized()
+    {
+        connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/Hubs").Build();
+
+        connection.Closed += async (error) =>
+        {
+            await Task.Delay(new Random().Next(0, 5) * 1000);
+            await connection.StartAsync();
+        };
+
+        connection.On<int>("UpdateNumber", (number) =>
+        {
+            currentCount = number;
+            StateHasChanged();
+        });
+
+        await connection.StartAsync();
+
+        Id = connection.ConnectionId;
+        State = connection.State.ToString();
+
+        base.OnInitialized();
+
+        StateHasChanged();
+    }
+}
