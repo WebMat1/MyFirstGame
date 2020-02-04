@@ -1,0 +1,79 @@
+﻿@page "/game"
+@implements IDisposable;
+@using Microsoft.AspNetCore.SignalR.Client;
+@using Newtonsoft.Json;
+@inject IJSRuntime jsRuntime;
+
+    <div class="row px-4 text-center">
+        <input @bind-Value="Name" @bind-Value:event="oninput" />
+        <button @onclick="Login">Entrar</button>
+    </div>
+
+    <MyFirstGame.Components.Arena @ref="ArenaComponent" Lines="10" Columns="15" OnKeyDown="@KeyPressed" ID="@connection.ConnectionId"></MyFirstGame.Components.Arena>
+
+@code {
+    public string Name { get; set; }
+    public HubConnection connection { get; set; }
+    private MyFirstGame.Components.Arena ArenaComponent;
+    public string connections { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/GameHub").WithAutomaticReconnect().Build();
+
+        connection.On<string>("UpdateArena", (arena) =>
+        {
+            var desobject = JsonConvert.DeserializeObject<Data.Arena>(arena);
+            ArenaComponent.GArena = desobject;
+            StateHasChanged();
+        });
+
+        await connection.StartAsync();
+
+        await base.OnInitializedAsync();
+
+        StateHasChanged();
+    }
+
+    async void IDisposable.Dispose()
+    {
+        await connection?.StopAsync();
+    }
+
+    public async void KeyPressed(KeyboardEventArgs e)
+    {
+        //jsRuntime.InvokeAsync<int>("alert", e.Key);
+
+        Data.Arena.Movement movement = Data.Arena.Movement.None;
+
+        switch (e.Key.ToLower())
+        {
+            case "arrowleft":
+            case"a":
+                movement = Data.Arena.Movement.Left;
+                break;
+            case "arrowup":
+            case "w":
+                movement = Data.Arena.Movement.Up;
+                break;
+            case "arrowright":
+            case "d":
+                movement = Data.Arena.Movement.Right;
+                break;
+            case "arrowdown":
+            case "s":
+                movement = Data.Arena.Movement.Down;
+                break;
+
+        }
+
+        await connection?.SendAsync("CommandAction", movement);
+    }
+
+    public async Task Login()
+    {
+        bool response = await connection.InvokeAsync<bool>("OnLogin", Name);
+        
+        await jsRuntime.InvokeAsync<bool>("setFocus", connection.ConnectionId);
+    }
+}

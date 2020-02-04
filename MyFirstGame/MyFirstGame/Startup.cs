@@ -55,7 +55,8 @@ namespace MyFirstGame
             {
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
-                endpoints.MapHub<Hubs.Hub>("/Hubs");
+                endpoints.MapHub<Hubs.Hub>("/Hub");
+                endpoints.MapHub<Hubs.GameHub>("/GameHub");
             });
         }
     }
