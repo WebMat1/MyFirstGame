@@ -3,7 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <ApplicationIcon />
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <AzureFunctionsVersion>v2</AzureFunctionsVersion>
     <StartupObject />
   </PropertyGroup>
 

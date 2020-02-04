@@ -140,7 +140,7 @@ namespace MyFirstGame.Data
         public void Quit(string id)
         {
             GetSlotByID(id).ID = null;
-
+            Users.Remove(GetUserByID(id));
         }
     }
 }
