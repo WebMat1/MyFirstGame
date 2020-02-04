@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Drawing;
 
 namespace MyFirstGame.Data
 {
@@ -77,6 +78,7 @@ namespace MyFirstGame.Data
                 {
                     Target.IsThereFruit = false;
                     GetUserByID(id).Score++;
+                    CheckWinsAndColors(id);
                 }
                     
             }
@@ -141,6 +143,34 @@ namespace MyFirstGame.Data
         {
             GetSlotByID(id).ID = null;
             Users.Remove(GetUserByID(id));
+        }
+
+        private void CheckWinsAndColors(string id)
+        {
+            var currentUser = GetUserByID(id);
+            if (currentUser.Score >= 15)
+            {
+                //zerar scores
+                foreach(Users user in Users)
+                {
+                    user.Score = 0;
+                }
+            }
+            else
+            {
+                //zera todas as cores
+                foreach (Users user in Users)
+                {
+                    user.Color = Color.Black;
+                }
+
+                //Melhor colocado
+                foreach(Users user in Users.Where(q=>q.Score == Users.OrderByDescending(q => q.Score).Select(q => q.Score).Take(1).FirstOrDefault()))
+                    user.Color = Color.DarkGreen;
+                
+                //usuario q acabou de pegar a fruta
+                currentUser.Color = Color.DarkGoldenrod;
+            }
         }
     }
 }

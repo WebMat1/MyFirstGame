@@ -25,9 +25,10 @@
                 <tbody>
                     @for (int i = 0; i < GArena.Users.Count; i++)
                     {
+                        var current = GArena.Users.OrderByDescending(q => q.Score).ThenBy(q => q.Name).ElementAt(i);
                         <tr>
-                            <td>@GArena.Users.OrderByDescending(q => q.Score).ThenBy(q => q.Name).ElementAt(i).Name</td>
-                            <td>@GArena.Users.OrderByDescending(q => q.Score).ThenBy(q => q.Name).ElementAt(i).Score</td>
+                            <td style="color:@current.Color.Name">@current.Name</td>
+                            <td style="color:@current.Color.Name">@current.Score</td>
                         </tr>
                     }
                 </tbody>
