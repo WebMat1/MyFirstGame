@@ -1,29 +1,25 @@
-﻿@page "/game"
+﻿@page "/snake"
 @implements IDisposable;
 @using Microsoft.AspNetCore.SignalR.Client;
 @using Newtonsoft.Json;
-@inject IJSRuntime jsRuntime;
 
-    <div class="row px-4 text-center">
-        <input @bind-Value="Name" @bind-Value:event="oninput" />
-        <button @onclick="Login">Entrar</button>
-    </div>
+<MyFirstGame.Components.Enter Connection="@connection" />
 
-    <MyFirstGame.Components.Arena @ref="ArenaComponent" Lines="10" Columns="15" OnKeyDown="@KeyPressed" ID="@connection.ConnectionId"></MyFirstGame.Components.Arena>
+<MyFirstGame.Components.Arena @ref="ArenaComponent" Lines="10" Columns="15" OnKeyDown="@KeyPressed" ID="@connection.ConnectionId"/>
 
 @code {
-    public string Name { get; set; }
     public HubConnection connection { get; set; }
     private MyFirstGame.Components.Arena ArenaComponent;
-    public string connections { get; set; } = "";
-
     protected override async Task OnInitializedAsync()
     {
-        connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/GameHub").WithAutomaticReconnect().Build();
-
+#if DEBUG
+        connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/SnakeHub").WithAutomaticReconnect().Build();
+#else
+    connection = new HubConnectionBuilder().WithUrl("http://192.168.0.5:8080/SnakeHub").WithAutomaticReconnect().Build();
+#endif
         connection.On<string>("UpdateArena", (arena) =>
         {
-            var desobject = JsonConvert.DeserializeObject<Data.Arena>(arena);
+            var desobject = JsonConvert.DeserializeObject<Data.Arena<Data.User>>(arena);
             ArenaComponent.GArena = desobject;
             StateHasChanged();
         });
@@ -35,35 +31,30 @@
         StateHasChanged();
     }
 
-    async void IDisposable.Dispose()
-    {
-        await connection?.StopAsync();
-    }
-
     public async void KeyPressed(KeyboardEventArgs e)
     {
         //jsRuntime.InvokeAsync<int>("alert", e.Key);
         if (connection.State == HubConnectionState.Connected)
         {
-            Data.Arena.Movement movement = Data.Arena.Movement.None;
+            Data.Movement movement = Data.Movement.None;
 
             switch (e.Key.ToLower())
             {
                 case "arrowleft":
                 case "a":
-                    movement = Data.Arena.Movement.Left;
+                    movement = Data.Movement.Left;
                     break;
                 case "arrowup":
                 case "w":
-                    movement = Data.Arena.Movement.Up;
+                    movement = Data.Movement.Up;
                     break;
                 case "arrowright":
                 case "d":
-                    movement = Data.Arena.Movement.Right;
+                    movement = Data.Movement.Right;
                     break;
                 case "arrowdown":
                 case "s":
-                    movement = Data.Arena.Movement.Down;
+                    movement = Data.Movement.Down;
                     break;
 
             }
@@ -72,10 +63,8 @@
         }
     }
 
-    public async Task Login()
+    async void IDisposable.Dispose()
     {
-        bool response = await connection.InvokeAsync<bool>("OnLogin", Name);
-
-        await jsRuntime.InvokeAsync<bool>("setFocus", connection.ConnectionId);
+        await connection?.StopAsync();
     }
 }

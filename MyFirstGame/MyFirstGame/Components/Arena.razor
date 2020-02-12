@@ -8,7 +8,8 @@
                     <tr>
                         @for (int c = 0; c < Columns; c++)
                         {
-                            <td width="@w_cel" height="@h_cel" class="@(GArena.Slots[l, c]?.Color(ID)) "></td>
+                            var color = GArena.SlotColor(GArena.Slots[l, c]);
+                            <td width="@w_cel" height="@h_cel" style="background-color: rgba(@color.R, @color.G, @color.B, @color.A) "></td>
                         }
                     </tr>
                 }
@@ -18,7 +19,7 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th scope="col">Collector</th>
+                        <th scope="col">Player</th>
                         <th scope="col">Score</th>
                     </tr>
                 </thead>
@@ -27,8 +28,8 @@
                     {
                         var current = GArena.Users.OrderByDescending(q => q.Score).ThenBy(q => q.Name).ElementAt(i);
                         <tr>
-                            <td style="color:@current.Color.Name">@current.Name</td>
-                            <td style="color:@current.Color.Name">@current.Score</td>
+                            <td style="background-color: rgba(@current.Color.R, @current.Color.G, @current.Color.B, 0.75)">@current.Name</td>
+                            <td style="background-color: rgba(@current.Color.R, @current.Color.G, @current.Color.B, 0.75)">@current.Score</td>
                         </tr>
                     }
                 </tbody>
@@ -37,11 +38,6 @@
     </div>
 </div>
 @code {
-    [Parameter] public int Lines { get; set; } = 5;
-    [Parameter] public int Columns { get; set; } = 5;
-    [Parameter] public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
-    [Parameter] public string ID { get; set; }
-
     #region Screen proprieties
     private int w_table { get => 600; }
     private int h_table { get => 400; }
@@ -49,14 +45,17 @@
     private int h_cel { get => h_table / Lines; }
     #endregion
 
-    public Data.Arena GArena { get; set; }
+    [Parameter] public int Lines { get; set; } = 5;
+    [Parameter] public int Columns { get; set; } = 5;
+    [Parameter] public string ID { get; set; }
+    [Parameter] public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
 
+    public Data.Arena<Data.User> GArena { get; set; }
 
     protected override void OnInitialized()
     {
-        GArena = new Data.Arena(Lines, Columns);
+        GArena = new Data.Arena<Data.User>(Lines, Columns);
 
         base.OnInitialized();
     }
-
 }

@@ -29,7 +29,8 @@ namespace MyFirstGame
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSignalR();
-            services.AddSingleton<WeatherForecastService>();
+            services.AddHostedService<Helper.TimerHelper>();
+            //services.AddSingleton<WeatherForecastService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,7 +57,8 @@ namespace MyFirstGame
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
                 endpoints.MapHub<Hubs.Hub>("/Hub");
-                endpoints.MapHub<Hubs.GameHub>("/GameHub");
+                endpoints.MapHub<Hubs.CollectorHub>("/CollectorHub");
+                endpoints.MapHub<Hubs.SnakeHub>("/SnakeHub");
             });
         }
     }

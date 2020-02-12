@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
+using System.Drawing;
 
 namespace MyFirstGame.Hubs
 {
@@ -16,9 +17,9 @@ namespace MyFirstGame.Hubs
         }
     }
 
-    public class GameHub : Microsoft.AspNetCore.SignalR.Hub
+    public class CollectorHub : Microsoft.AspNetCore.SignalR.Hub
     {
-        public static Data.Arena Arena = new Data.Arena(10, 15);
+        public static Data.Collector.Arena Arena = new Data.Collector.Arena(10, 15);
 
         public override async Task OnConnectedAsync()
         {
@@ -26,10 +27,16 @@ namespace MyFirstGame.Hubs
             await Rotine();
         }
 
-        public bool OnLogin(string name)
+        public bool OnLogin(string name, int ArgbColor)
         {
             if (!Arena.CanEnterNewUser(Context.ConnectionId))
             {
+                var user = Arena.GetUserByID(Context.ConnectionId);
+
+                //update color ----> do before = check if can this color
+                user.Color = Color.FromArgb(ArgbColor);
+                user.Name = name;
+
                 //notifica todos
                 Clients.All.SendAsync("UpdateArena", JsonConvert.SerializeObject(Arena));
                 return false;
@@ -38,7 +45,7 @@ namespace MyFirstGame.Hubs
             {
                 var newPosition = Arena.NewPosition();
                 Arena.Slots[newPosition[0], newPosition[1]].ID = Context.ConnectionId;
-                Arena.Users.Add(new Data.Users(name, Context.ConnectionId));
+                Arena.Users.Add(new Data.Collector.Collector(name, Context.ConnectionId, Color.FromArgb(ArgbColor)));
 
                 Rotine();
 
@@ -55,12 +62,16 @@ namespace MyFirstGame.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        public async void CommandAction(Data.Arena.Movement command)
+        public async void CommandAction(Data.Movement command)
         {
-            //movimenta o peao
-            Arena.Move(Context.ConnectionId, command);
+            var user = Arena.GetUserByID(Context.ConnectionId);
+            if (user != null)
+            {
+                //movimenta o peao
+                Arena.Move(Context.ConnectionId, command);
 
-            await Rotine();
+                await Rotine();
+            }
         }
 
         private async Task Rotine()
@@ -68,7 +79,7 @@ namespace MyFirstGame.Hubs
             if (!Arena.IsThereFruit())
             {
                 var newPosition = Arena.NewPosition();
-                Arena.Slots[newPosition[0], newPosition[1]].IsThereFruit = true;
+                Arena.Slots[newPosition[0], newPosition[1]].IsFruit= true;
             }
 
             var convertedObject = JsonConvert.SerializeObject(Arena);

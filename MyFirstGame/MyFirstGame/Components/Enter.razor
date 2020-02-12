@@ -1,0 +1,29 @@
+﻿@inject IJSRuntime jsRuntime;
+@using System.Drawing;
+@using System.ComponentModel.DataAnnotations;
+@using Microsoft.AspNetCore.SignalR.Client;
+
+<div class="text-center border p-2" style="border-color: rgba(@Color.R,@Color.G,@Color.B,@Color.A) !important;">
+    <EditForm Model="this">
+        <DataAnnotationsValidator />
+        <input @bind-Value="Name" @bind-Value:event="oninput" placeholder="Name" />
+        <MyFirstGame.Components.InputColor @bind-Value="Color" />
+        <button type="button" class="btn btn-success" @onclick="Login">Go</button>
+    </EditForm>
+
+    @*<div style="background-color: rgba(@Color.R, @Color.G, @Color.B, @Color.A)" class="p-5">Div</div>*@
+</div>
+@code {
+    [Required]
+    public string Name { get; set; }
+    public Color Color { get; set; }
+
+    [Parameter] public HubConnection Connection { get; set; }
+
+    public async Task Login()
+    {
+        bool response = await Connection.InvokeAsync<bool>("OnLogin", Name, Color.ToArgb());
+
+        await jsRuntime.InvokeAsync<bool>("setFocus", Connection.ConnectionId);
+    }
+}

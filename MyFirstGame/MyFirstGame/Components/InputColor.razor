@@ -1,0 +1,22 @@
+﻿@inherits InputBase<Color>
+@using System.Drawing;
+
+@*<input type="text" @bind="CurrentValueAsString" />*@
+<input type="color" @bind="CurrentValueAsString" />
+
+@code {      
+    protected override string FormatValueAsString(Color value)
+    {
+        return "#" + value.R.ToString("X2") + value.G.ToString("X2") + value.B.ToString("X2");
+        //return base.FormatValueAsString(value);
+    }
+
+    protected override bool TryParseValueFromString(string value, out Color result, out string validationMessage)
+    {
+        var poorString =  value.Replace("#", "0xFF");
+        int intValue = Convert.ToInt32(poorString , 16);
+        result = Color.FromArgb(intValue);
+        validationMessage = "";
+        return true;
+    }
+}

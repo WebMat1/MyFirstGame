@@ -1,0 +1,72 @@
+﻿@page "/collector"
+@implements IDisposable;
+@using Microsoft.AspNetCore.SignalR.Client;
+@using Newtonsoft.Json;
+
+<MyFirstGame.Components.Enter Connection="@connection" />
+
+<MyFirstGame.Components.Arena @ref="ArenaComponent" Lines="10" Columns="15" OnKeyDown="@KeyPressed" ID="@connection.ConnectionId" />
+
+@code {
+
+    public HubConnection connection { get; set; }
+    private MyFirstGame.Components.Arena ArenaComponent;
+
+    protected override async Task OnInitializedAsync()
+    {
+#if DEBUG
+        connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/CollectorHub").WithAutomaticReconnect().Build();
+#else
+    connection = new HubConnectionBuilder().WithUrl("http://192.168.0.5:8080/CollectorHub").WithAutomaticReconnect().Build();
+#endif
+        connection.On<string>("UpdateArena", (arena) =>
+        {
+            var desobject = JsonConvert.DeserializeObject<Data.Arena<Data.User>>(arena);
+            ArenaComponent.GArena = desobject;
+            StateHasChanged();
+        });
+
+        await connection.StartAsync();
+
+        await base.OnInitializedAsync();
+
+        StateHasChanged();
+    }
+
+    async void IDisposable.Dispose()
+    {
+        await connection?.StopAsync();
+    }
+
+    public async void KeyPressed(KeyboardEventArgs e)
+    {
+        //jsRuntime.InvokeAsync<int>("alert", e.Key);
+        if (connection != null && connection.State == HubConnectionState.Connected)
+        {
+            Data.Movement movement = Data.Movement.None;
+
+            switch (e.Key.ToLower())
+            {
+                case "arrowleft":
+                case "a":
+                    movement = Data.Movement.Left;
+                    break;
+                case "arrowup":
+                case "w":
+                    movement = Data.Movement.Up;
+                    break;
+                case "arrowright":
+                case "d":
+                    movement = Data.Movement.Right;
+                    break;
+                case "arrowdown":
+                case "s":
+                    movement = Data.Movement.Down;
+                    break;
+
+            }
+
+            await connection?.SendAsync("CommandAction", movement);
+        }
+    }
+}

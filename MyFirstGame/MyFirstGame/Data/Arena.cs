@@ -1,23 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Drawing;
 
 namespace MyFirstGame.Data
 {
-    public class Arena
+    public class Arena<T> where T : User
     {
-        public Slot[,] Slots { get; set; }
-        public List<Users> Users { get; set; } = new List<Users>();
-        public enum Movement
-        {
-            Up,
-            Down,
-            Left,
-            Right,
-            None
-        }
         public Arena(int lines, int columns)
         {
             Slots = new Slot[lines, columns];
@@ -26,14 +16,129 @@ namespace MyFirstGame.Data
             {
                 for (int c = 0; c < columns; c++)
                 {
-                    Slots[l, c] = new Data.Slot(l,c);
+                    Slots[l, c] = new Slot(l, c);
                 }
             }
         }
 
-        public void Move(string id, Movement mov)
+        public Slot[,] Slots { get; set; }
+        public virtual List<T> Users { get; set; } = new List<T>();
+
+        public bool CanEnterNewUser(string id)
         {
-            Slot Origin = GetSlotByID(id);
+            if (Users == null || Users.Count >= 10) //maximo de usuarios
+                return false;
+
+            if (GetUserByID(id) != null)
+                return false;
+
+            return true;
+        }
+        public Slot GetSlotByID(string id)
+        {
+            Slot aux = null;
+            for (int l = 0; l < Slots.GetLength(0); l++)
+            {
+                for (int c = 0; c < Slots.GetLength(1); c++)
+                {
+                    if (Slots[l, c].ID == id)
+                        aux = Slots[l, c];
+                }
+            }
+            return aux;
+        }
+        public IList<Slot> GetSlotsByID(string id)
+        {
+            List<Slot> ImageSnake = new List<Slot>();
+            for (int l = 0; l < Slots.GetLength(0); l++)
+            {
+                for (int c = 0; c < Slots.GetLength(1); c++)
+                {
+                    if (Slots[l, c].ID == id)
+                        ImageSnake.Add(Slots[l, c]);
+                }
+            }
+            return ImageSnake;
+        }
+
+        public T GetUserByID(string id)
+        {
+            return Users.FirstOrDefault(q => q.Id == id);
+        }
+        
+        public bool IsThereFruit()
+        {
+            for (int l = 0; l < Slots.GetLength(0); l++)
+            {
+                for (int c = 0; c < Slots.GetLength(1); c++)
+                {
+                    if (Slots[l, c].IsFruit)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void Quit(string id)
+        {
+            //when you died
+            Die(id);
+
+            //GetSlotByID(id).ID = null;
+            Users.Remove(GetUserByID(id));
+        }
+
+        public void Die(string id)
+        {
+            foreach (Slot slot in GetSlotsByID(id))
+            {
+                slot.ID = null;
+                slot.Part = Slot.SnakeParties.Head;
+                slot.Sequence = 0;
+            }
+        }
+
+        public int[] NewPosition()
+        {
+            int[] pos = new int[2];
+            Random r = new Random();
+            do
+            {
+                pos[0] = r.Next(0, Slots.GetLength(0));
+                pos[1] = r.Next(0, Slots.GetLength(1));
+            } while (Slots[pos[0], pos[1]].ID != null || Slots[pos[0], pos[1]].IsFruit == true);
+
+            return pos;
+        }
+
+        public Color SlotColor(Slot slot)
+        {
+            //se for fruta
+            if (slot.IsFruit)
+                return Color.Green;
+
+            //se for vazio
+            if (slot.ID == null)
+                return Color.LightGray; 
+
+            //recebe o usuario
+            var user = GetUserByID(slot.ID);
+
+            //verifica se o usuario esta posicionado
+            if (user == null)
+                return Color.LightGray;
+
+            //retorna se é corpo ou cabeça da snake
+            if (Slots[slot.Row, slot.Column].Part != Slot.SnakeParties.Head)
+                return Color.FromArgb(50, user.Color);//cor mais fraca
+            else
+                return user.Color; //cor mais forte
+
+        }
+
+        public Slot MoveTarget(Slot Origin, Movement mov)
+        {
             Slot Target = null;
 
             switch (mov)
@@ -50,12 +155,12 @@ namespace MyFirstGame.Data
                     if (Origin.Row == Slots.GetLength(0) - 1)
                         Target = Slots[0, Origin.Column];
                     else
-                        Target = Slots[Origin.Row +1, Origin.Column];
+                        Target = Slots[Origin.Row + 1, Origin.Column];
                     break;
                 case Movement.Left:
                     //se bater na parede da esquerda
                     if (Origin.Column == 0)
-                        Target = Slots[Origin.Row, Slots.GetLength(1) -1];
+                        Target = Slots[Origin.Row, Slots.GetLength(1) - 1];
                     else
                         Target = Slots[Origin.Row, Origin.Column - 1]; //movimenta
                     break;
@@ -64,113 +169,20 @@ namespace MyFirstGame.Data
                     if (Origin.Column == Slots.GetLength(1) - 1)
                         Target = Slots[Origin.Row, 0];
                     else
-                        Target = Slots[Origin.Row, Origin.Column+1];
+                        Target = Slots[Origin.Row, Origin.Column + 1];
                     break;
             }
 
-            //faz a substituição do movimento
-            if (Target != null && Target.ID == null)
-            {
-                Target.ID = Origin.ID;
-                Origin.ID = null;
-
-                if (Target.IsThereFruit == true)
-                {
-                    Target.IsThereFruit = false;
-                    GetUserByID(id).Score++;
-                    CheckWinsAndColors(id);
-                }
-                    
-            }
+            return Target;
         }
+    }
 
-        public bool CanEnterNewUser(string id)
-        {
-            if (Users == null || Users.Count >= 10) //maximo de usuarios
-                return false;
-
-            if (GetUserByID(id) != null)
-                return false;
-
-            return true;
-        }
-        public int[] NewPosition()
-        {
-            int[] pos = new int[2];
-            Random r = new Random();
-            do
-            {
-                pos[0] = r.Next(0, Slots.GetLength(0));
-                pos[1] = r.Next(0, Slots.GetLength(1));
-            } while (Slots[pos[0],pos[1]].ID != null || Slots[pos[0], pos[1]].IsThereFruit == true);
-
-            return pos;
-        }
-
-        private Slot GetSlotByID(string id)
-        {
-            Slot aux = null;
-            for(int l = 0; l < Slots.GetLength(0); l++)
-            {
-                for (int c = 0; c< Slots.GetLength(1); c++)
-                {
-                    if (Slots[l, c].ID == id)
-                        aux = Slots[l, c];
-                }
-            }
-            return aux;
-        }
-
-        private Users GetUserByID(string id)
-        {
-            return Users.FirstOrDefault(q => q.Id == id);
-        }
-        public bool IsThereFruit()
-        {
-            for (int l = 0; l < Slots.GetLength(0); l++)
-            {
-                for (int c = 0; c < Slots.GetLength(1); c++)
-                {
-                    if (Slots[l, c].IsThereFruit)
-                        return true;
-                }
-            }
-
-            return false;
-        }
-
-        public void Quit(string id)
-        {
-            GetSlotByID(id).ID = null;
-            Users.Remove(GetUserByID(id));
-        }
-
-        private void CheckWinsAndColors(string id)
-        {
-            var currentUser = GetUserByID(id);
-            if (currentUser.Score >= 15)
-            {
-                //zerar scores
-                foreach(Users user in Users)
-                {
-                    user.Score = 0;
-                }
-            }
-            else
-            {
-                //zera todas as cores
-                foreach (Users user in Users)
-                {
-                    user.Color = Color.Black;
-                }
-
-                //Melhor colocado
-                foreach(Users user in Users.Where(q=>q.Score == Users.OrderByDescending(q => q.Score).Select(q => q.Score).Take(1).FirstOrDefault()))
-                    user.Color = Color.DarkGreen;
-                
-                //usuario q acabou de pegar a fruta
-                currentUser.Color = Color.DarkGoldenrod;
-            }
-        }
+    public enum Movement
+    {
+        Up,
+        Down,
+        Left,
+        Right,
+        None
     }
 }
