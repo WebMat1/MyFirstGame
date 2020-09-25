@@ -3,3 +3,11 @@
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+<EditForm Model="@this">
+    @*<MyFirstGame.Components.MSFT @bind-Value="teste"/>*@
+    <MyFirstGame.Components.InputCurrency @bind-Value="teste" />
+</EditForm>
+<label>@teste</label>
+@code{
+    public double teste { get; set; }
+}

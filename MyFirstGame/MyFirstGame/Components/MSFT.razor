@@ -1,0 +1,42 @@
+﻿@inject IJSRuntime JsRuntime;
+@inherits InputNumber<Double>
+
+<input type="number" @attributes="AdditionalAttributes"
+       class="@CssClass"
+       value="@CurrentValueAsString"
+       @oninput="EventCallback.Factory.CreateBinder<string>(
+this, __value => SetValue(__value), CurrentValueAsString)" />
+
+<input type="number" @attributes="AdditionalAttributes"
+       class="@CssClass" @bind-value="CurrentValueAsString" @bind-value:event="oninput"/>
+
+<br />
+<label>_Value = @_value</label>
+<br />
+<label>CurrentValueAsString = @CurrentVAsStr</label>
+<br />
+<label>CurrentValue = @_Value</label>
+
+@code{
+    private string _value {get;set;}
+    private string CurrentVAsStr { get { return CurrentValueAsString; } }
+    private double _Value { get { return CurrentValue; } }
+
+    protected override bool TryParseValueFromString(string value, out double result, out string validationErrorMessage)
+    {
+        return base.TryParseValueFromString(value, out result, out validationErrorMessage);
+    }
+
+    private void SetValue(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            value = "0";
+        else
+        {
+            value = value.Replace('.', ',');
+
+            _value = value;
+            CurrentValue = double.Parse(value);
+        }
+    }
+}

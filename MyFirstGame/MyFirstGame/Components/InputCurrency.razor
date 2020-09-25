@@ -1,0 +1,40 @@
+﻿@inherits InputNumber<double>
+
+<input type="text" @bind-value="CurrentValue" />
+<input type="text" id="percentId" @bind-value="ValueShown"
+       @oninput="EventCallback.Factory.CreateBinder<string>(this, __value => OnInput(__value), ValueShown)"
+       @onfocusin="EventCallback.Factory.Create<FocusEventArgs>(this, FocusIn)"
+       @onfocusout="EventCallback.Factory.Create<FocusEventArgs>(this, FocusOut)" />
+
+@code {
+    //private double ValueHidden { get => CurrentValue; set => CurrentValue = value; }
+    private string ValueShown { get; set; }
+
+    private void FocusIn(FocusEventArgs value)
+    {
+        if (!string.IsNullOrEmpty(ValueShown))
+            ValueShown = (CurrentValue).ToString("0.00");
+
+        if (CurrentValue == 0)
+            ValueShown = "";
+    }
+
+    private void FocusOut(FocusEventArgs value)
+    {
+        if (string.IsNullOrEmpty(ValueShown))
+            CurrentValue = 0;
+
+        ValueShown = "R$ " + CurrentValue.ToString("0.00");
+    }
+    private async void OnInput(string value)
+    {
+        double aux;
+        bool valid = double.TryParse(value, out aux);
+
+        if (valid)
+        {
+            CurrentValue = aux;
+            ValueShown = value;
+        }
+    }
+}

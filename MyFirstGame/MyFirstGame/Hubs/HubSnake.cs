@@ -80,6 +80,7 @@ namespace MyFirstGame.Hubs
         {
             Arena.Quit(Context.ConnectionId);
 
+            Arena.NFruits = 0;
             //await Rotine();
 
             await base.OnDisconnectedAsync(exception);
