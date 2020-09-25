@@ -14,11 +14,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-#if DEBUG
         connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/CollectorHub").WithAutomaticReconnect().Build();
-#else
-    connection = new HubConnectionBuilder().WithUrl("http://192.168.0.5:8080/CollectorHub").WithAutomaticReconnect().Build();
-#endif
+
         connection.On<string>("UpdateArena", (arena) =>
         {
             var desobject = JsonConvert.DeserializeObject<Data.Arena<Data.User>>(arena);

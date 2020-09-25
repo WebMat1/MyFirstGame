@@ -12,11 +12,8 @@
     private MyFirstGame.Components.Arena ArenaComponent;
     protected override async Task OnInitializedAsync()
     {
-#if DEBUG
-        connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/SnakeHub").WithAutomaticReconnect().Build();
-#else
-    connection = new HubConnectionBuilder().WithUrl("http://192.168.0.5:8080/SnakeHub").WithAutomaticReconnect().Build();
-#endif
+        connection = new HubConnectionBuilder().WithUrl("http://localhost:5000/SnakeHub").WithAutomaticReconnect().Build();
+
         connection.On<string>("UpdateArena", (arena) =>
         {
             var desobject = JsonConvert.DeserializeObject<Data.Arena<Data.User>>(arena);
