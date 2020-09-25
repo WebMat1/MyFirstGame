@@ -12,7 +12,7 @@
     private MyFirstGame.Components.Arena ArenaComponent;
     protected override async Task OnInitializedAsync()
     {
-        connection = new HubConnectionBuilder().WithUrl("http://localhost:5000/SnakeHub").WithAutomaticReconnect().Build();
+        connection = new HubConnectionBuilder().WithUrl("http://localhost:59054/SnakeHub").WithAutomaticReconnect().Build();
 
         connection.On<string>("UpdateArena", (arena) =>
         {
